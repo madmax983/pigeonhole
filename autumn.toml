@@ -1,0 +1,56 @@
+[server]
+# Loopback locally. A container would set AUTUMN_SERVER__HOST=0.0.0.0.
+host = "127.0.0.1"
+port = 3000
+
+[log]
+level = "info"
+format = "Pretty"
+
+[health]
+path = "/health"
+# Shows the fleet's own component: mode, open files, created/deleted totals.
+detailed = true
+
+# Hatching a pigeon, writing a note, releasing a flock and taking the census
+# are htmx posts; the layout loads Autumn's CSRF helper, which lifts the token from the
+# meta tag into a header on every one of them.
+[security.csrf]
+enabled = true
+
+# The session holds one thing: which pigeon you are.
+[session]
+backend = "memory"
+allow_memory_in_production = true
+
+[jobs]
+backend = "memory"
+workers = 0
+
+[channels]
+backend = "local"
+
+# The tenant is whatever pigeon the session says. Only /pigeon needs one.
+[tenancy]
+enabled = true
+source = "session"
+session_key = "tenant_id"
+login_redirect = "/"
+public_paths = ["/", "/_board.json", "/_panel", "/stream", "/pigeons", "/enter", "/flock", "/slot", "/census", "/about", "/pigeonhole.js", "/static"]
+
+# The control database. Sessions and the pigeon registry; never a note.
+[database]
+url = "sqlite://pigeonhole-control.db"
+
+# One SQLite file per routing slot, shared by every tenant that hashes there
+# (ADR 0019 in autumn-web). 16,384 slots: the file count is bounded however
+# many tenants arrive.
+[database.fleet]
+mode = "slot"
+root = "pigeonhole-fleet"
+max_open = 64
+pool_size = 2
+# Slots are a closed set, so creating a slot's file on first use is safe —
+# and the default for slot mode. Spelled out for the reader.
+create_on_demand = true
+idle_close_secs = 20

@@ -1,0 +1,33 @@
+[package]
+name = "pigeonhole-app"
+description = "Pigeonhole: thousands of tiny tenants sharing 16,384 slot files, a board that shows them, and a census that checks no row is in the wrong file."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+default-run = "pigeonhole-app"
+
+[dependencies]
+holes = { path = "../holes" }
+anyhow = { workspace = true }
+autumn-web = { workspace = true }
+chrono = { workspace = true }
+diesel = { workspace = true }
+diesel-async = { workspace = true }
+diesel_migrations = { workspace = true }
+maud = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+autumn-web = { workspace = true, features = ["test-support"] }
+proptest = { workspace = true }
+tempfile = { workspace = true }
+
+[lints]
+workspace = true
