@@ -22,9 +22,9 @@ proptest! {
         }
     }
 
-    /// FINDINGS 3: slot mode takes any routing key, so the app checks names
-    /// itself. Every pigeon name is also a valid tenant-mode id: a move to
-    /// tenant mode refuses no pigeon.
+    /// Slot mode takes any routing key, so the app checks names itself. Every
+    /// pigeon name is also a valid tenant-mode id: a move to tenant mode
+    /// refuses no pigeon.
     #[test]
     fn every_pigeon_name_is_a_tenant_mode_id(raw in "[ -~]{0,48}|[a-z][a-z0-9-]{0,38}[a-z0-9]") {
         if let Ok(name) = TenantName::parse(&raw) {

@@ -21,6 +21,9 @@ Rules that matter here:
 - Do not `use diesel::prelude::*` beside the model macros (E0034).
 - Every route must be in `main.rs` and `routes::ALL`; every route is
   deliberately `#[public]` (no login).
+- A comment says what the code does or why. Never cite `FINDINGS.md` or a
+  finding number in code: a later reader does not have the context. Put that
+  in the commit message or the PR.
 
 Gates: `./verify.sh` (authoritative, on the Mac). In the cloud:
 `cargo fmt --all -- --check && cargo clippy --all-targets -- -D warnings && cargo test --workspace`.

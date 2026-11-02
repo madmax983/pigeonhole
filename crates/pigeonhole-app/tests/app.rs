@@ -147,9 +147,8 @@ async fn the_census_finds_a_planted_stray() {
         ));
 }
 
-/// FINDINGS 1: the census held the control connection through the whole
-/// sweep. The log then charged the sweep to `SELECT ?`. Here the test holds
-/// the only control connection. The sweep must start anyway.
+/// The census must not hold a control connection during the sweep. The test
+/// holds the only control connection. The sweep must start anyway.
 #[tokio::test]
 async fn the_census_sweeps_without_a_control_connection() {
     let tmp = tempfile::tempdir().unwrap();
