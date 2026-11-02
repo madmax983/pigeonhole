@@ -46,8 +46,8 @@ impl Taken {
 
 /// Read every slot file and the registry, and fold them.
 ///
-/// The control connection is taken after the sweep. A sweep reads thousands
-/// of files, and a held connection blocks the control pool for that time.
+/// This function takes the control connection after the sweep. A sweep reads
+/// thousands of files. A held connection stays busy for all that time.
 ///
 /// # Errors
 ///
@@ -96,6 +96,7 @@ pub async fn take(shards: &Shards, control: LazyDb) -> Result<Taken, AutumnError
     }
     let census = Census::fold(&reports, slot_of);
 
+    let took = started.elapsed();
     let mut control = control.checkout().await?;
     let registry: Vec<Name> = diesel::sql_query("SELECT name FROM pigeons ORDER BY name")
         .load(&mut *control)
@@ -112,6 +113,6 @@ pub async fn take(shards: &Shards, control: LazyDb) -> Result<Taken, AutumnError
         unknown: found.difference(&registered).take(50).cloned().collect(),
         unreadable,
         census,
-        took: started.elapsed(),
+        took,
     })
 }

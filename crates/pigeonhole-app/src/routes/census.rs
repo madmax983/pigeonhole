@@ -30,8 +30,8 @@ pub async fn index(csrf: Option<CsrfToken>) -> AutumnResult<Markup> {
     ))
 }
 
-/// Take it. `LazyDb`, not `Db`: the census takes the control connection
-/// after the sweep, not for the whole sweep.
+/// Take the census. It uses `LazyDb`, so it takes the control connection only
+/// after the sweep.
 #[post("/census")]
 #[public]
 pub async fn take(shards: Shards, control: LazyDb) -> AutumnResult<Markup> {
