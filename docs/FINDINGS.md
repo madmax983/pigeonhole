@@ -20,3 +20,13 @@ cap of 64 during a flock). New in slot mode:
    tenant ids only in tenant mode, which is correct (the id never names a
    file in slot mode), but it means an app moving from tenant to slot mode
    silently loses id validation. Worth one line in the guide.
+
+## Status
+
+| # | Fix |
+| --- | --- |
+| 1 | autumn-foundation/autumn#3573: a long `Db` hold logs `database connection held past slow_query_threshold`, not a query. Here: the census takes `LazyDb` and checks out after the sweep (`the_census_sweeps_without_a_control_connection`). |
+| 2 | autumn-foundation/autumn#3573: the SQLite warning gives about `2 × connections + databases` open files. For this app at `max_open`: 2 × 138 + 65 = 341. |
+| 3 | autumn-foundation/autumn#3573: the fleet guide states it. Here: every pigeon name is also a valid tenant-mode id (`every_pigeon_name_is_a_tenant_mode_id`). |
+
+Plan: [`docs/plans/2026-11-02-findings.md`](plans/2026-11-02-findings.md).

@@ -3,6 +3,7 @@
 mod common;
 
 use std::sync::Arc;
+use std::time::Duration;
 
 use autumn_web::reexports::{diesel, diesel_async};
 use autumn_web::test::TestClient;
@@ -144,6 +145,44 @@ async fn the_census_finds_a_planted_stray() {
             elsewhere.db_name(),
             home.db_name()
         ));
+}
+
+/// FINDINGS 1: the census held the control connection through the whole
+/// sweep. The log then charged the sweep to `SELECT ?`. Here the test holds
+/// the only control connection. The sweep must start anyway.
+#[tokio::test]
+async fn the_census_sweeps_without_a_control_connection() {
+    let tmp = tempfile::tempdir().unwrap();
+    let fleet = common::fleet(tmp.path(), 4);
+    let control = common::control_pool_sized(tmp.path(), 1).await;
+    let client = common::app(control.clone(), fleet.clone());
+    hatch(&client, "dusk-roller").await.assert_status(200);
+    for key in fleet.open_keys() {
+        fleet.close(&key).await;
+    }
+    assert_eq!(fleet.stats().open, 0, "every file is closed");
+    let opened_before = fleet.stats().opens_total;
+
+    let held = control.get().await.unwrap();
+    let watch = async {
+        let swept = tokio::time::timeout(Duration::from_secs(10), async {
+            while fleet.stats().opens_total == opened_before {
+                tokio::time::sleep(Duration::from_millis(5)).await;
+            }
+        })
+        .await
+        .is_ok();
+        drop(held);
+        swept
+    };
+    let (census, swept) = tokio::join!(client.post("/census").send(), watch);
+    assert!(
+        swept,
+        "the census waited for a control connection before the sweep"
+    );
+    census
+        .assert_status(200)
+        .assert_body_contains("Every row is in its pigeon");
 }
 
 #[tokio::test]
