@@ -23,8 +23,14 @@ pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
 /// A control database in `dir`, with the registry.
 pub async fn control_pool(dir: &Path) -> Pool<RuntimeConnection> {
+    control_pool_sized(dir, DatabaseConfig::default().pool_size).await
+}
+
+/// A control database in `dir` with `pool_size` connections.
+pub async fn control_pool_sized(dir: &Path, pool_size: usize) -> Pool<RuntimeConnection> {
     let pool = create_pool(&DatabaseConfig {
         url: Some(format!("sqlite://{}", dir.join("control.db").display())),
+        pool_size,
         ..Default::default()
     })
     .expect("control pool builds")

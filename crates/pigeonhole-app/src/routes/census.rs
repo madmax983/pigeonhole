@@ -30,11 +30,12 @@ pub async fn index(csrf: Option<CsrfToken>) -> AutumnResult<Markup> {
     ))
 }
 
-/// Take it.
+/// Take the census. It uses `LazyDb`, so it takes the control connection only
+/// after the sweep.
 #[post("/census")]
 #[public]
-pub async fn take(shards: Shards, mut db: Db) -> AutumnResult<Markup> {
-    let taken = census::take(&shards, &mut db).await?;
+pub async fn take(shards: Shards, control: LazyDb) -> AutumnResult<Markup> {
+    let taken = census::take(&shards, control).await?;
     Ok(result(&taken))
 }
 

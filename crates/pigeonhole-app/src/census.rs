@@ -5,7 +5,7 @@
 use std::collections::BTreeSet;
 use std::time::{Duration, Instant};
 
-use autumn_web::db::RuntimeConnection;
+use autumn_web::db::LazyDb;
 use autumn_web::error::AutumnError;
 use autumn_web::reexports::{diesel, diesel_async};
 use autumn_web::sharding::Shards;
@@ -46,10 +46,13 @@ impl Taken {
 
 /// Read every slot file and the registry, and fold them.
 ///
+/// This function takes the control connection after the sweep. A sweep reads
+/// thousands of files. A held connection stays busy for all that time.
+///
 /// # Errors
 ///
 /// The registry could not be read.
-pub async fn take(shards: &Shards, control: &mut RuntimeConnection) -> Result<Taken, AutumnError> {
+pub async fn take(shards: &Shards, control: LazyDb) -> Result<Taken, AutumnError> {
     #[derive(diesel::QueryableByName)]
     struct Name {
         #[diesel(sql_type = diesel::sql_types::Text)]
@@ -93,9 +96,12 @@ pub async fn take(shards: &Shards, control: &mut RuntimeConnection) -> Result<Ta
     }
     let census = Census::fold(&reports, slot_of);
 
+    let took = started.elapsed();
+    let mut control = control.checkout().await?;
     let registry: Vec<Name> = diesel::sql_query("SELECT name FROM pigeons ORDER BY name")
-        .load(control)
+        .load(&mut *control)
         .await?;
+    drop(control);
     let registered: BTreeSet<String> = registry.into_iter().map(|n| n.name).collect();
     let found: BTreeSet<String> = reports
         .iter()
@@ -107,6 +113,6 @@ pub async fn take(shards: &Shards, control: &mut RuntimeConnection) -> Result<Ta
         unknown: found.difference(&registered).take(50).cloned().collect(),
         unreadable,
         census,
-        took: started.elapsed(),
+        took,
     })
 }
